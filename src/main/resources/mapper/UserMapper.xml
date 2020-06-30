@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xd.mapper.UserMapper">
+    <select id="findAll" resultType="User">
+        SELECT u.*, d.dname, r.rname
+        FROM t_user u
+        LEFT JOIN t_dept d ON u.deptid = d.deptid
+        LEFT JOIN t_role r ON u.rid = r.rid
+        <where>
+            <if test="username!=null and username!=''">
+                u.username like '%${username}%'
+            </if>
+            <if test="sdate!=null and sdate!=''">
+                and u.userdate &gt;=#{sdate}
+            </if>
+            <if test="adate!=null and adate!=''">
+                and u.userdate &lt;=#{adate}
+            </if>
+        </where>
+
+
+    </select>
+
+    <select id="findPage" resultType="User">
+        SELECT u.*, d.dname, r.rname
+        FROM t_user u
+                 LEFT JOIN t_dept d ON u.deptid = d.deptid
+                 LEFT JOIN t_role r ON u.rid = r.rid
+    </select>
+    <select id="findAllPower" resultType="Power">
+        select d.*
+        from t_user a
+                 left join t_role b on a.rid = b.rid
+                 LEFT JOIN t_r_p c on b.rid = c.rid
+                 LEFT JOIN t_power d on c.id = d.id
+        where a.id = #{id}
+    </select>
+    <select id="findUserRoleDept" resultType="User">
+        SELECT u.*, d.dname, r.rname
+        FROM t_user u
+                 LEFT JOIN t_dept d ON u.deptid = d.deptid
+                 LEFT JOIN t_role r ON u.rid = r.rid
+        where u.id = #{id}
+    </select>
+
+    <select id="findDept" resultType="Dept">
+        select *
+        from t_dept
+    </select>
+    <select id="findRole" resultType="Role">
+        select *
+        from t_role
+        where deptid = #{deptid}
+    </select>
+    <select id="findUserLogin" resultType="User">
+        select *
+        from t_user
+        where username = #{username}
+    </select>
+    <update id="saveUserDeptRole">
+        update t_user
+        set deptid = #{deptid},
+            rid    = #{rid}
+        where id = #{id}
+    </update>
+    <delete id="deleteUser">
+        delete
+        from t_user
+        where id = #{id}
+    </delete>
+    <insert id="addUser" parameterType="User">
+        insert into t_user (username, password, deptid, rid, age, userdate)
+        value (#{username}, #{password}, #{deptid}, #{rid}, #{age}, #{userdate})
+    </insert>
+    <select id="getSmoke" resultType="RsBean">
+        select *
+        from t_smoke
+        where cardno = #{cardno}
+    </select>
+    <select id="getWine" resultType="RsBean">
+        select *
+        from t_wine
+        where cardno = #{cardno}
+    </select>
+    <insert id="saveSmoke" parameterType="Smoke">
+        insert into t_smoke (cardno, madedate, address, price, name)
+        values (#{cardno}, #{madedate}, #{address}, #{price}, #{name})
+    </insert>
+    <insert id="saveWine" parameterType="Wine">
+        insert into t_wine (cardno, madedate, address, price, name, vol)
+        values (#{cardno}, #{madedate}, #{address}, #{price}, #{name}, #{vol})
+    </insert>
+
+    <!--请假-->
+    <insert id="insertFlow" parameterType="flowBean">
+        <selectKey resultType="int" keyProperty="id" order="AFTER" keyColumn="id">
+            select last_insert_id()
+        </selectKey>
+        insert into t_flow (sid,qjtime,ktime,jtime,qjcause,qjstatus,qjdate)
+        values
+        (#{sid},#{qjtime},#{ktime},#{jtime},#{qjcause},#{qjstatus},#{qjdate});
+    </insert>
+
+    <select id="getGradeById" resultType="gradeBean">
+        select *
+        from t_grade
+        where gid = #{gid}
+    </select>
+    <insert id="getPmxinsert" parameterType="pmxBean">
+        insert into t_pmx (fid, userid, status, pstatus, pshunxu, spdate)
+        values (#{fid}, #{userid}, #{status}, #{pstatus}, #{pshunxu}, #{spdate});
+    </insert>
+    <select id="getStuListById" resultType="QjVo">
+        select *
+        from t_flow
+        where sid = #{sid}
+    </select>
+    <select id="getStuIdById" resultType="int">
+        select userid
+        from t_pmx
+        where pstatus = 1
+          and fid = #{fid}
+    </select>
+    <select id="getPmxStuMaxById" resultType="int">
+        select userid
+        from t_pmx
+        where (select max(pshunxu) from t_pmx where fid = #{fid})
+          and fid = #{fid}
+    </select>
+    <select id="getStuNoPss" resultType="int">
+        select userid
+        from t_pmx
+        where status = 2
+          and fid = #{fid}
+    </select>
+    <select id="getUnameAndRname" resultType="QjVo">
+        SELECT u.username uname, r.rname
+        FROM t_user u
+                 LEFT JOIN t_role r on u.rid = r.rid
+        where id = #{userid};
+    </select>
+    <select id="getMyQjShById" resultType="int">
+        SELECT fid
+        FROM t_pmx
+        where pstatus = 1
+          and userid = #{id};
+    </select>
+    <select id="getFlowById" resultType="QjVo">
+        select *
+        from t_flow
+        where id = #{fid}
+    </select>
+    <select id="getUserNameById" resultType="QjVo">
+        SELECT u.username uname, g.gname
+        FROM t_user u
+                 LEFT JOIN t_grade g on u.gid = g.gid
+        where id = #{sid};
+    </select>
+    <update id="updateProcessStatus">
+        update t_flow set qjstatus=#{shstatus} where id=#{fid}
+    </update>
+    <update id="updatePmxStatus">
+        update t_pmx set status=#{shstatus},pstatus=2 where fid=#{fid} and userid=#{userid}
+    </update>
+    <select id="getQjMxInfo" resultType="int">
+        select pshunxu from t_pmx where fid=#{fid} and userid=#{userid}
+    </select>
+    <select id="getMaxPshunxu" resultType="int">
+        select max(pshunxu) from t_pmx where fid=#{fid}
+    </select>
+    <update id="updatePmxShunxu">
+        update t_pmx set pstatus = 1 where fid=#{fid} and pshunxu = #{pshunxu}
+    </update>
+</mapper>
